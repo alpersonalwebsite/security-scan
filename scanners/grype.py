@@ -1,15 +1,17 @@
 import logging
-import subprocess
+from modules.subprocess_utils import run_subprocess
 
 def run_grype(target_path, report_path):
     logging.info(f"Running Grype on {target_path}")
     try:
-        result = subprocess.run([
+        command = [
             "grype", target_path, "-o", "json"
-        ], capture_output=True, text=True)
-        with open(report_path, "w") as f:
-            f.write(result.stdout)
-        if result.returncode != 0:
-            logging.warning(f"Grype finished with warnings: {result.stderr}")
+        ]
+        result = run_subprocess(command)
+        if result and result.stdout:
+            with open(report_path, "w") as f:
+                f.write(result.stdout)
+        else:
+            logging.error("Grype scan failed due to a subprocess error or empty output.")
     except Exception as e:
         logging.exception("Grype scan failed")

@@ -5,11 +5,15 @@ import subprocess
 def run_trufflehog(target_repo, report_path):
     logging.info(f"Running TruffleHog on {target_repo}")
     try:
-        result = subprocess.run([
+        command = [
             "trufflehog", "filesystem", "--json", target_repo
-        ], capture_output=True, text=True)
+        ]
+        logging.debug(f"Executing command: {' '.join(command)}")
+        result = subprocess.run(command, capture_output=True, text=True)
+
         # Log raw output for debugging
         logging.debug(f"Raw TruffleHog output: {result.stdout}")
+        logging.debug(f"Raw TruffleHog errors: {result.stderr}")
 
         # Save raw output to a file for analysis
         raw_output_path = report_path.replace(".json", "_raw_output.txt")
@@ -22,12 +26,24 @@ def run_trufflehog(target_repo, report_path):
         # Check if the output is empty
         if not result.stdout.strip():
             logging.info("TruffleHog completed successfully but found no secrets.")
+            placeholder = {
+                "status": "completed",
+                "secrets_found": 0
+            }
+            with open(report_path, "w") as f:
+                json.dump(placeholder, f, indent=4)
             return
 
         try:
-            output = json.loads(result.stdout)
+            output = [json.loads(line) for line in result.stdout.splitlines() if line.strip()]
             if not output:
                 logging.info("TruffleHog completed successfully but found no secrets.")
+                placeholder = {
+                    "status": "completed",
+                    "secrets_found": 0
+                }
+                with open(report_path, "w") as f:
+                    json.dump(placeholder, f, indent=4)
                 return
             with open(report_path, "w") as f:
                 json.dump(output, f, indent=4)

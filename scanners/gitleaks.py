@@ -1,6 +1,6 @@
 import logging
-import subprocess
 import shutil
+from modules.subprocess_utils import run_subprocess
 
 def run_gitleaks(target_repo, report_path):
     logging.info(f"Running Gitleaks on {target_repo}")
@@ -10,10 +10,11 @@ def run_gitleaks(target_repo, report_path):
         return
 
     try:
-        result = subprocess.run([
+        command = [
             "gitleaks", "detect", "--source", target_repo, "--report-format", "json", "--report-path", report_path
-        ], capture_output=True, text=True)
-        if result.returncode != 0:
-            logging.warning(f"Gitleaks finished with warnings: {result.stderr}")
+        ]
+        result = run_subprocess(command)
+        if result is None:
+            logging.error("Gitleaks scan failed due to a subprocess error.")
     except Exception as e:
         logging.exception("Gitleaks scan failed")

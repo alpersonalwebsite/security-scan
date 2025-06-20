@@ -1,13 +1,14 @@
 import logging
-import subprocess
+from modules.subprocess_utils import run_subprocess
 
 def run_bandit(target_path, report_path):
     logging.info(f"Running Bandit on {target_path}")
     try:
-        result = subprocess.run([
+        command = [
             "bandit", "-r", target_path, "-f", "json", "-o", report_path
-        ], capture_output=True, text=True)
-        if result.returncode != 0:
-            logging.warning(f"Bandit finished with warnings: {result.stderr}")
+        ]
+        result = run_subprocess(command)
+        if result is None:
+            logging.error("Bandit scan failed due to a subprocess error.")
     except Exception as e:
         logging.exception("Bandit scan failed")
