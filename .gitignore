@@ -1,0 +1,17 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.env
+.env.*
+# Logs
+logs/
+# Reports
+reports/*
+!reports/
+# Exclude cloned repositories
+cloned_repos/*
+!cloned_repos/
+.DS_Store
+# Ignore Safety project configuration file
+.safety-project.ini

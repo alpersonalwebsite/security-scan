@@ -1,0 +1,26 @@
+# Example config for security-scan
+
+# General configuration
+general:
+  branch: main
+  skip: false
+  tags: []
+  requirements_path: requirements.txt
+
+# List of repositories with specific configurations
+repositories:
+  - path: https://github.com/alpersonalwebsite/unsafe-repository
+    branch: main
+    skip: false
+  - path: /path/to/repo2
+    branch: main
+    skip: true
+    tags: [frontend]
+  - path: /path/to/repo3
+    branch: feature-branch
+    skip: true
+    tags: [experimental]
+
+# Additional settings for future extensions
+exclude_paths: []  # List of paths to exclude from scanning
+custom_rules: []   # List of custom rules for tools like Semgrep
