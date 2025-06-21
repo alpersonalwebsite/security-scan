@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title or 'Grype Vulnerability Report' }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #2c3e50; color: #fff; }
+        tr:nth-child(even) { background: #f2f2f2; }
+        .severity-critical { color: #c0392b; font-weight: bold; }
+        .severity-high { color: #e67e22; font-weight: bold; }
+        .severity-medium { color: #f39c12; font-weight: bold; }
+        .severity-low { color: #2980b9; font-weight: bold; }
+        .severity-negligible { color: #27ae60; font-weight: bold; }
+        .filename { font-family: monospace; }
+        .summary { background: #f4f4f4; padding: 1em; border-radius: 8px; margin-bottom: 2em; }
+        a, a:visited { color: #2980b9; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title or 'Grype Vulnerability Report' }}</h1>
+    <div class="summary">
+        <ul>
+            <li><strong>Total Vulnerabilities:</strong> {{ data.matches|length }}</li>
+            <li><strong>Scan Date:</strong> {{ data.descriptor.date if data.descriptor and data.descriptor.date else 'N/A' }}</li>
+        </ul>
+    </div>
+    {% if data.matches and data.matches|length > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th>Package</th>
+                <th>Version</th>
+                <th>Type</th>
+                <th>Vulnerability</th>
+                <th>Severity</th>
+                <th>Fix</th>
+                <th>Location</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for match in data.matches %}
+            <tr class="severity-{{ match.vulnerability.severity|lower }}">
+                <td class="filename">{{ match.artifact.name }}</td>
+                <td>{{ match.artifact.version }}</td>
+                <td>{{ match.artifact.type }}</td>
+                <td>{{ match.vulnerability.id }}</td>
+                <td class="severity-{{ match.vulnerability.severity|lower }}">{{ match.vulnerability.severity }}</td>
+                <td>{{ match.vulnerability.fix.versions | join(', ') if match.vulnerability.fix and match.vulnerability.fix.versions else '' }}</td>
+                <td>{% if match.artifact.locations %}{{ match.artifact.locations | map(attribute='path') | join(', ') }}{% endif %}</td>
+                <td>
+                  {% if match.vulnerability.dataSource %}
+                    <a href="{{ match.vulnerability.dataSource }}" target="_blank">Source</a>
+                  {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No vulnerabilities found in this scan.</p>
+    {% endif %}
+</body>
+</html>

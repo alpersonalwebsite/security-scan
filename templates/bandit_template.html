@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title or 'Bandit Security Report' }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #2c3e50; color: #fff; }
+        tr:nth-child(even) { background: #f2f2f2; }
+        .severity-high { color: #c0392b; font-weight: bold; }
+        .severity-medium { color: #e67e22; font-weight: bold; }
+        .severity-low { color: #2980b9; font-weight: bold; }
+        .filename { font-family: monospace; }
+        .code-block { background: #f4f4f4; border: 1px solid #ddd; padding: 8px; font-family: monospace; white-space: pre; }
+        a.more-info, a.cwe-link { color: #2980b9; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title or 'Bandit Security Report' }}</h1>
+    <h2>Summary</h2>
+    <ul>
+        <li><strong>Total Issues:</strong> {{ data.results|length }}</li>
+        <li><strong>Generated At:</strong> {{ data.generated_at }}</li>
+    </ul>
+    <h2>Findings</h2>
+    {% if data.results and data.results|length > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Filename</th>
+                <th>Line</th>
+                <th>Issue</th>
+                <th>Severity</th>
+                <th>Confidence</th>
+                <th>CWE</th>
+                <th>Code</th>
+                <th>Links</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for result in data.results %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td class="filename">{{ result.filename }}</td>
+                <td>{{ result.line_number }}</td>
+                <td>{{ result.test_name }}: {{ result.issue_text }}</td>
+                <td class="severity-{{ result.issue_severity|lower }}">{{ result.issue_severity }}</td>
+                <td>{{ result.issue_confidence }}</td>
+                <td>
+                  {% if result.issue_cwe %}
+                    <a class="cwe-link" href="{{ result.issue_cwe.link }}" target="_blank">CWE-{{ result.issue_cwe.id }}</a>
+                  {% endif %}
+                </td>
+                <td><div class="code-block">{{ result.code }}</div></td>
+                <td>
+                  {% if result.more_info %}
+                    <a class="more-info" href="{{ result.more_info }}" target="_blank">More Info</a>
+                  {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p>No issues found by Bandit.</p>
+    {% endif %}
+    <h2>Metrics</h2>
+    <pre>{{ data.metrics | tojson(indent=2) }}</pre>
+    {% if data.errors and data.errors|length > 0 %}
+    <h2>Errors</h2>
+    <ul>
+        {% for error in data.errors %}
+        <li>{{ error }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</body>
+</html>

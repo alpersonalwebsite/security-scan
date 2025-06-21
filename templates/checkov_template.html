@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Checkov Security Report</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f8f9fa; color: #222; margin: 0; padding: 0; }
+        .container { max-width: 1100px; margin: 30px auto; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px #0001; padding: 32px; }
+        h1, h2, h3 { color: #2c3e50; }
+        .summary { display: flex; gap: 32px; margin-bottom: 32px; }
+        .summary-box { background: #f1f3f6; border-radius: 6px; padding: 18px 28px; box-shadow: 0 1px 3px #0001; text-align: center; }
+        .summary-box.failed { border-left: 6px solid #e74c3c; }
+        .summary-box.passed { border-left: 6px solid #27ae60; }
+        .summary-box.skipped { border-left: 6px solid #f1c40f; }
+        .summary-box.parsing { border-left: 6px solid #7f8c8d; }
+        .check-section { margin-bottom: 40px; }
+        .check-type-title { margin-top: 32px; font-size: 1.3em; border-bottom: 2px solid #eee; padding-bottom: 6px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { padding: 8px 10px; border-bottom: 1px solid #e1e4e8; }
+        th { background: #f6f8fa; text-align: left; }
+        tr.failed { background: #ffeaea; }
+        tr.passed { background: #eafaf1; }
+        tr.skipped { background: #fffbe6; }
+        .code-block { background: #f4f4f4; font-family: 'Fira Mono', 'Consolas', monospace; font-size: 0.97em; border-radius: 4px; padding: 6px 10px; margin: 4px 0; white-space: pre; }
+        .guideline-link { color: #2980b9; text-decoration: underline; }
+        .check-id { font-weight: bold; font-size: 1.05em; }
+        .footer { margin-top: 40px; color: #888; font-size: 0.95em; text-align: center; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Checkov Security Report</h1>
+    {% for check_type in data %}
+        <div class="check-section">
+            <div class="check-type-title">Check Type: {{ check_type.check_type|capitalize }}</div>
+            <div class="summary">
+                <div class="summary-box failed">Failed: {{ check_type.results.failed_checks|length }}</div>
+                <div class="summary-box passed">Passed: {{ check_type.results.passed_checks|length }}</div>
+                <div class="summary-box skipped">Skipped: {{ check_type.results.skipped_checks|length }}</div>
+                <div class="summary-box parsing">Parsing Errors: {{ check_type.results.parsing_errors|length }}</div>
+            </div>
+            <h3>Failed Checks</h3>
+            {% if check_type.results.failed_checks %}
+            <table>
+                <tr>
+                    <th>Check ID</th>
+                    <th>Name</th>
+                    <th>File</th>
+                    <th>Result</th>
+                    <th>Code Block</th>
+                    <th>Guideline</th>
+                </tr>
+                {% for check in check_type.results.failed_checks %}
+                <tr class="failed">
+                    <td class="check-id">{{ check.check_id }}</td>
+                    <td>{{ check.check_name }}</td>
+                    <td>{{ check.file_path }}</td>
+                    <td>{{ check.check_result.result }}</td>
+                    <td>
+                        {% if check.code_block %}
+                            {% for line in check.code_block %}
+                                <div class="code-block">{{ line[1] }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if check.guideline %}
+                            <a class="guideline-link" href="{{ check.guideline }}" target="_blank">Link</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}<div>No failed checks.</div>{% endif %}
+
+            <h3>Passed Checks</h3>
+            {% if check_type.results.passed_checks %}
+            <table>
+                <tr>
+                    <th>Check ID</th>
+                    <th>Name</th>
+                    <th>File</th>
+                    <th>Result</th>
+                    <th>Code Block</th>
+                    <th>Guideline</th>
+                </tr>
+                {% for check in check_type.results.passed_checks %}
+                <tr class="passed">
+                    <td class="check-id">{{ check.check_id }}</td>
+                    <td>{{ check.check_name }}</td>
+                    <td>{{ check.file_path }}</td>
+                    <td>{{ check.check_result.result }}</td>
+                    <td>
+                        {% if check.code_block %}
+                            {% for line in check.code_block %}
+                                <div class="code-block">{{ line[1] }}</div>
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if check.guideline %}
+                            <a class="guideline-link" href="{{ check.guideline }}" target="_blank">Link</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}<div>No passed checks.</div>{% endif %}
+
+            <h3>Skipped Checks</h3>
+            {% if check_type.results.skipped_checks %}
+            <table>
+                <tr>
+                    <th>Check ID</th>
+                    <th>Name</th>
+                    <th>File</th>
+                    <th>Reason</th>
+                </tr>
+                {% for check in check_type.results.skipped_checks %}
+                <tr class="skipped">
+                    <td class="check-id">{{ check.check_id }}</td>
+                    <td>{{ check.check_name }}</td>
+                    <td>{{ check.file_path }}</td>
+                    <td>{{ check.suppress_comment or 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}<div>No skipped checks.</div>{% endif %}
+
+            <h3>Parsing Errors</h3>
+            {% if check_type.results.parsing_errors %}
+            <table>
+                <tr>
+                    <th>Error</th>
+                </tr>
+                {% for error in check_type.results.parsing_errors %}
+                <tr class="parsing">
+                    <td>{{ error }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}<div>No parsing errors.</div>{% endif %}
+
+            <div class="summary" style="margin-top: 24px;">
+                <div class="summary-box">Resources: {{ check_type.summary.resource_count }}</div>
+                <div class="summary-box">Checkov Version: {{ check_type.summary.checkov_version }}</div>
+                <div class="summary-box">URL: {% if check_type.url %}<a href="{{ check_type.url }}" target="_blank">More Info</a>{% else %}N/A{% endif %}</div>
+            </div>
+        </div>
+    {% endfor %}
+    <div class="footer">Generated by Security Scan | Checkov Report &copy; {{ year }}</div>
+</div>
+</body>
+</html>

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title or 'TruffleHog Secrets Scan Report' }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #2c3e50; color: #fff; }
+        tr:nth-child(even) { background: #f2f2f2; }
+        .filename { font-family: monospace; }
+        .secret { font-family: monospace; color: #b71c1c; }
+        .summary { background: #f4f4f4; padding: 1em; border-radius: 8px; margin-bottom: 2em; }
+        a, a:visited { color: #2980b9; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title or 'TruffleHog Secrets Scan Report' }}</h1>
+    <div class="summary">
+        <ul>
+            <li><strong>Total Findings:</strong> {{ data|length }}</li>
+        </ul>
+    </div>
+    {% if data and data|length > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th>Rule</th>
+                <th>Description</th>
+                <th>File</th>
+                <th>Line</th>
+                <th>Secret</th>
+                <th>Verified</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for finding in data %}
+            <tr>
+                <td class="filename">{{ finding.DetectorName }}</td>
+                <td>{{ finding.DetectorDescription }}</td>
+                <td class="filename">{{ finding.SourceMetadata.Data.Filesystem.file if finding.SourceMetadata and finding.SourceMetadata.Data and finding.SourceMetadata.Data.Filesystem and finding.SourceMetadata.Data.Filesystem.file }}</td>
+                <td>{{ finding.SourceMetadata.Data.Filesystem.line if finding.SourceMetadata and finding.SourceMetadata.Data and finding.SourceMetadata.Data.Filesystem and finding.SourceMetadata.Data.Filesystem.line }}</td>
+                <td class="secret">{{ finding.Raw }}</td>
+                <td>{{ 'Yes' if finding.Verified else 'No' }}</td>
+                <td>
+                  {% if finding.ExtraData and finding.ExtraData.url %}
+                    <a href="{{ finding.ExtraData.url }}" target="_blank">Profile</a>
+                  {% elif finding.ExtraData and finding.ExtraData.rotation_guide %}
+                    <a href="{{ finding.ExtraData.rotation_guide }}" target="_blank">Rotation Guide</a>
+                  {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No secrets or sensitive data found in this scan.</p>
+    {% endif %}
+</body>
+</html>

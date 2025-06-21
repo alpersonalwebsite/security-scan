@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title or 'Gitleaks Secrets Scan Report' }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #2c3e50; color: #fff; }
+        tr:nth-child(even) { background: #f2f2f2; }
+        .high-entropy { background: #ffe0b2; }
+        .filename { font-family: monospace; }
+        .secret { font-family: monospace; color: #b71c1c; }
+        .match { font-family: monospace; color: #1565c0; }
+        a, a:visited { color: #2980b9; text-decoration: underline; }
+        .summary { background: #f4f4f4; padding: 1em; border-radius: 8px; margin-bottom: 2em; }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title or 'Gitleaks Secrets Scan Report' }}</h1>
+    <div class="summary">
+        <ul>
+            <li><strong>Total Findings:</strong> {{ data|length }}</li>
+            <li><strong>Scan Date:</strong> {{ data[0].Date if data and data[0].Date else 'N/A' }}</li>
+        </ul>
+    </div>
+    {% if data and data|length > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th>Rule</th>
+                <th>Description</th>
+                <th>File</th>
+                <th>Line</th>
+                <th>Commit</th>
+                <th>Author</th>
+                <th>Secret</th>
+                <th>Match</th>
+                <th>Entropy</th>
+                <th>Link</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for finding in data %}
+            <tr class="{% if finding.Entropy and finding.Entropy > 4.5 %}high-entropy{% endif %}">
+                <td class="filename">{{ finding.RuleID }}</td>
+                <td>{{ finding.Description }}</td>
+                <td class="filename">{{ finding.File }}</td>
+                <td>{{ finding.StartLine }}</td>
+                <td>
+                  {% if finding.Commit %}
+                    <a href="https://github.com/alpersonalwebsite/unsafe-repository/commit/{{ finding.Commit }}" target="_blank">{{ finding.Commit[:7] }}</a>
+                  {% endif %}
+                </td>
+                <td>{{ finding.Author }}</td>
+                <td class="secret">{{ finding.Secret }}</td>
+                <td class="match">{{ finding.Match }}</td>
+                <td>{{ '%.2f' % finding.Entropy if finding.Entropy is defined else '' }}</td>
+                <td>
+                  {% if finding.Link %}
+                    <a href="{{ finding.Link }}" target="_blank">View</a>
+                  {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No secrets or sensitive data found in this scan.</p>
+    {% endif %}
+</body>
+</html>

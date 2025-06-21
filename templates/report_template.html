@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; }
+        h1 { color: #2c3e50; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em; }
+        th, td { border: 1px solid #ccc; padding: 0.5em; text-align: left; }
+        th { background: #f4f4f4; }
+        tr:nth-child(even) { background: #f9f9f9; }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title }}</h1>
+    {% if items %}
+    <table>
+        <thead>
+            <tr>
+                {% for col in columns %}
+                <th>{{ col }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in items %}
+            <tr>
+                {% for col in columns %}
+                <td>{{ item[col] }}</td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No findings in this report.</p>
+    {% endif %}
+</body>
+</html>

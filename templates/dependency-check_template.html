@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title or 'Dependency-Check Security Report' }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #2c3e50; color: #fff; }
+        tr:nth-child(even) { background: #f2f2f2; }
+        .severity-CRITICAL, .severity-critical { color: #c0392b; font-weight: bold; }
+        .severity-HIGH, .severity-high { color: #e67e22; font-weight: bold; }
+        .severity-MEDIUM, .severity-medium { color: #f39c12; font-weight: bold; }
+        .severity-LOW, .severity-low { color: #2980b9; font-weight: bold; }
+        .severity-INFO, .severity-info { color: #27ae60; font-weight: bold; }
+        .filename { font-family: monospace; }
+        .code-block { background: #f4f4f4; border: 1px solid #ddd; padding: 8px; font-family: monospace; white-space: pre; }
+        a.cve-link { color: #2980b9; text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title or 'Dependency-Check Security Report' }}</h1>
+    <div class="summary">
+        <ul>
+            <li><strong>Scan Date:</strong> {{ data.projectInfo.reportDate }}</li>
+            <li><strong>Engine Version:</strong> {{ data.scanInfo.engineVersion }}</li>
+            <li><strong>Total Dependencies:</strong> {{ data.dependencies|length }}</li>
+            <li><strong>Total Vulnerable Dependencies:</strong> {{ data.dependencies | selectattr('vulnerabilities') | select('truthy') | list | length }}</li>
+        </ul>
+        <div class="credits">
+            <strong>Credits:</strong>
+            <ul>
+                {% for key, value in data.projectInfo.credits.items() %}
+                <li>{{ value }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    {% set vuln_deps = data.dependencies | selectattr('vulnerabilities') | select('truthy') | list %}
+    {% if vuln_deps and vuln_deps|length > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th>Package</th>
+                <th>Version</th>
+                <th>Vulnerability</th>
+                <th>Severity</th>
+                <th>CVE</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for dep in vuln_deps %}
+                {% for vuln in dep.vulnerabilities %}
+                <tr class="severity-{{ vuln.severity|lower }}">
+                    <td class="filename">{{ dep.fileName }}</td>
+                    <td>{{ dep.version or '' }}</td>
+                    <td>{{ vuln.title or vuln.name or '' }}</td>
+                    <td class="severity-{{ vuln.severity|lower }}">{{ vuln.severity or '' }}</td>
+                    <td>
+                        {% if vuln.identifiers %}
+                            {% for ident in vuln.identifiers %}
+                                {% if ident.type == 'CVE' %}
+                                    <a class="cve-link" href="https://nvd.nist.gov/vuln/detail/{{ ident.value }}" target="_blank">{{ ident.value }}</a><br>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    </td>
+                    <td>{{ vuln.description or '' }}</td>
+                </tr>
+                {% endfor %}
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No vulnerable dependencies found in this scan.</p>
+    {% endif %}
+</body>
+</html>

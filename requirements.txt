@@ -2,3 +2,4 @@ pyyaml
 jinja2
 checkov
 python-dotenv
+azure-storage-blob

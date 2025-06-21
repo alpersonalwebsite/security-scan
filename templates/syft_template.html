@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ report_title or 'Syft SBOM Report' }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
+        h1 { color: #2c3e50; }
+        table { border-collapse: collapse; width: 100%; margin-top: 1em; background: #fff; }
+        th, td { border: 1px solid #ddd; padding: 8px; }
+        th { background: #2c3e50; color: #fff; }
+        tr:nth-child(even) { background: #f2f2f2; }
+        .filename { font-family: monospace; }
+        .summary { background: #f4f4f4; padding: 1em; border-radius: 8px; margin-bottom: 2em; }
+    </style>
+</head>
+<body>
+    <h1>{{ report_title or 'Syft SBOM Report' }}</h1>
+    <div class="summary">
+        <ul>
+            <li><strong>Total Packages:</strong> {{ data.artifacts|length }}</li>
+            <li><strong>Scan Date:</strong> {{ data.descriptor.date if data.descriptor and data.descriptor.date else 'N/A' }}</li>
+        </ul>
+    </div>
+    {% if data.artifacts and data.artifacts|length > 0 %}
+    <table>
+        <thead>
+            <tr>
+                <th>Name</th>
+                <th>Version</th>
+                <th>Type</th>
+                <th>Language</th>
+                <th>Licenses</th>
+                <th>Locations</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for pkg in data.artifacts %}
+            <tr>
+                <td class="filename">{{ pkg.name }}</td>
+                <td>{{ pkg.version }}</td>
+                <td>{{ pkg.type }}</td>
+                <td>{{ pkg.language }}</td>
+                <td>{% if pkg.licenses %}{{ pkg.licenses | join(', ') }}{% endif %}</td>
+                <td>{% if pkg.locations %}{{ pkg.locations | map(attribute='path') | join(', ') }}{% endif %}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No packages found in this scan.</p>
+    {% endif %}
+</body>
+</html>
