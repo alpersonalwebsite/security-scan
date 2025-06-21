@@ -144,4 +144,23 @@ To efficiently scan multiple repositories, follow these steps:
 4. **Set Up a Local Mirror (Optional)**:
    For large-scale usage, consider setting up a local mirror of the NVD database. This eliminates the need to query the NVD servers entirely. Refer to the [Dependency-Check documentation](https://jeremylong.github.io/DependencyCheck/dependency-check-mirror.html) for instructions.
 
+## Scanning Private Repositories
+
+If you want to scan private repositories, you must provide a GitHub personal access token with access to those repositories. The recommended way is to use a fine-grained token.
+
+### Creating a Fine-Grained GitHub Personal Access Token
+
+1. Go to [GitHub Personal Access Tokens](https://github.com/settings/tokens).
+2. Click **"Generate new token (fine-grained)"**.
+3. Set a name (e.g., `security-scan script`) and expiration date.
+4. Under **"Repository access"**, select the repositories you want to scan.
+5. Under **"Repository permissions"**, set **Contents** to **Read-only** (or **Read and write** if you need to push changes).
+6. Click **Generate token** and copy the token (you will not be able to see it again).
+7. Add the token to your `.env` file in the project root:
+   ```env
+   GITHUB_TOKEN=your_copied_token
+   ```
+
+**Note:** Never share your token publicly. If it is ever exposed, revoke it immediately from your GitHub settings.
+
 MIT License
