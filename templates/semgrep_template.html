@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ report_title or 'Semgrep Security Report' }}</title>
+    <title>{{ (report_title or 'Semgrep Security Report') | e }}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
         h1 { color: #2c3e50; }
@@ -20,11 +20,11 @@
     </style>
 </head>
 <body>
-    <h1>{{ report_title or 'Semgrep Security Report' }}</h1>
+    <h1><pre>{{ report_title or 'Semgrep Security Report' }}</pre></h1>
     <div class="summary">
         <ul>
-            <li><strong>Total Findings:</strong> {{ data.results|length }}</li>
-            <li><strong>Scan Date:</strong> {{ data.date if data.date else 'N/A' }}</li>
+            <li><strong>Scan Date:</strong> <pre>{{ data.date }}</pre></li>
+            <li><strong>Total Findings:</strong> <pre>{{ data.results|length }}</pre></li>
         </ul>
     </div>
     {% if data.results and data.results|length > 0 %}
@@ -45,7 +45,7 @@
             {% for result in data.results %}
             <tr class="severity-{{ result.extra.severity|lower }}">
                 <td class="filename">{{ result.check_id }}</td>
-                <td>{{ result.extra.message }}</td>
+                <td><pre>{{ result.extra.message }}</pre></td>
                 <td class="severity-{{ result.extra.severity|lower }}">{{ result.extra.severity }}</td>
                 <td>{{ result.extra.confidence if result.extra.confidence is defined else '' }}</td>
                 <td class="filename">{{ result.path }}</td>

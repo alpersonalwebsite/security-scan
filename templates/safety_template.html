@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ report_title or 'Safety Vulnerability Report' }}</title>
+    <title>{{ (report_title or 'Safety Security Report') | e }}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
         h1 { color: #2c3e50; }
@@ -19,11 +19,11 @@
     </style>
 </head>
 <body>
-    <h1>{{ report_title or 'Safety Vulnerability Report' }}</h1>
+    <h1><pre>{{ report_title or 'Safety Security Report' }}</pre></h1>
     <div class="summary">
         <ul>
-            <li><strong>Total Dependencies:</strong> {{ data.dependencies|length }}</li>
-            <li><strong>Summary:</strong> {{ data.summary }}</li>
+            <li><strong>Scan Date:</strong> <pre>{{ data.generated_at }}</pre></li>
+            <li><strong>Total Vulnerabilities:</strong> <pre>{{ data.vulnerabilities|length }}</pre></li>
         </ul>
     </div>
     {% set vuln_count = 0 %}
@@ -55,5 +55,19 @@
     {% else %}
     <p>No vulnerabilities found in this scan.</p>
     {% endif %}
+    <h2>Vulnerability Details</h2>
+    {% for dep in data.dependencies %}
+        {% for vuln in dep.vulnerabilities %}
+        <div class="vulnerability">
+            <h3 class="severity-{{ vuln.severity|lower }}">{{ vuln.title }}</h3>
+            <p><strong>Dependency:</strong> <pre>{{ dep.name }}</pre></p>
+            <p><strong>Vulnerability ID:</strong> <pre>{{ vuln.id }}</pre></p>
+            <p><strong>Severity:</strong> <pre>{{ vuln.severity }}</pre></p>
+            <p><strong>CVSS Score:</strong> <pre>{{ vuln.cvss_score }}</pre></p>
+            <p><strong>Description:</strong> <pre>{{ vuln.description }}</pre></p>
+            <p><strong>Recommendation:</strong> <pre>{{ vuln.recommendation }}</pre></p>
+        </div>
+        {% endfor %}
+    {% endfor %}
 </body>
 </html>

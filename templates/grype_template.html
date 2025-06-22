@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ report_title or 'Grype Vulnerability Report' }}</title>
+    <title>{{ (report_title or 'Grype Security Report') | e }}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
         h1 { color: #2c3e50; }
@@ -21,11 +21,19 @@
     </style>
 </head>
 <body>
-    <h1>{{ report_title or 'Grype Vulnerability Report' }}</h1>
+    <h1><pre>{{ report_title or 'Grype Security Report' }}</pre></h1>
     <div class="summary">
         <ul>
-            <li><strong>Total Vulnerabilities:</strong> {{ data.matches|length }}</li>
-            <li><strong>Scan Date:</strong> {{ data.descriptor.date if data.descriptor and data.descriptor.date else 'N/A' }}</li>
+            {% if data.artifact is defined and data.artifact.created is defined %}
+            <li><strong>Scan Date:</strong> <pre>{{ data.artifact.created }}</pre></li>
+            {% else %}
+            <li><strong>Scan Date:</strong> <pre>Unknown</pre></li>
+            {% endif %}
+            {% if data.matches is defined %}
+            <li><strong>Total Vulnerabilities:</strong> <pre>{{ data.matches|length }}</pre></li>
+            {% else %}
+            <li><strong>Total Vulnerabilities:</strong> <pre>Unknown</pre></li>
+            {% endif %}
         </ul>
     </div>
     {% if data.matches and data.matches|length > 0 %}
@@ -48,7 +56,7 @@
                 <td class="filename">{{ match.artifact.name }}</td>
                 <td>{{ match.artifact.version }}</td>
                 <td>{{ match.artifact.type }}</td>
-                <td>{{ match.vulnerability.id }}</td>
+                <td><pre>{{ match.vulnerability.id }}</pre></td>
                 <td class="severity-{{ match.vulnerability.severity|lower }}">{{ match.vulnerability.severity }}</td>
                 <td>{{ match.vulnerability.fix.versions | join(', ') if match.vulnerability.fix and match.vulnerability.fix.versions else '' }}</td>
                 <td>{% if match.artifact.locations %}{{ match.artifact.locations | map(attribute='path') | join(', ') }}{% endif %}</td>

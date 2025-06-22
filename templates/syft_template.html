@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ report_title or 'Syft SBOM Report' }}</title>
+    <title>{{ (report_title or 'Syft SBOM Report') | e }}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
         h1 { color: #2c3e50; }
@@ -15,11 +15,19 @@
     </style>
 </head>
 <body>
-    <h1>{{ report_title or 'Syft SBOM Report' }}</h1>
+    <h1><pre>{{ report_title or 'Syft SBOM Report' }}</pre></h1>
     <div class="summary">
         <ul>
-            <li><strong>Total Packages:</strong> {{ data.artifacts|length }}</li>
-            <li><strong>Scan Date:</strong> {{ data.descriptor.date if data.descriptor and data.descriptor.date else 'N/A' }}</li>
+            {% if data.artifact is defined and data.artifact.created is defined %}
+            <li><strong>Scan Date:</strong> <pre>{{ data.artifact.created }}</pre></li>
+            {% else %}
+            <li><strong>Scan Date:</strong> <pre>Unknown</pre></li>
+            {% endif %}
+            {% if data.artifact is defined and data.artifact.packages is defined %}
+            <li><strong>Total Packages:</strong> <pre>{{ data.artifact.packages|length }}</pre></li>
+            {% else %}
+            <li><strong>Total Packages:</strong> <pre>Unknown</pre></li>
+            {% endif %}
         </ul>
     </div>
     {% if data.artifacts and data.artifacts|length > 0 %}
@@ -37,12 +45,12 @@
         <tbody>
             {% for pkg in data.artifacts %}
             <tr>
-                <td class="filename">{{ pkg.name }}</td>
-                <td>{{ pkg.version }}</td>
-                <td>{{ pkg.type }}</td>
-                <td>{{ pkg.language }}</td>
-                <td>{% if pkg.licenses %}{{ pkg.licenses | join(', ') }}{% endif %}</td>
-                <td>{% if pkg.locations %}{{ pkg.locations | map(attribute='path') | join(', ') }}{% endif %}</td>
+                <td class="filename"><pre>{{ pkg.name }}</pre></td>
+                <td><pre>{{ pkg.version }}</pre></td>
+                <td><pre>{{ pkg.type }}</pre></td>
+                <td><pre>{{ pkg.language }}</pre></td>
+                <td><pre>{% if pkg.licenses %}{{ pkg.licenses | join(', ') }}{% endif %}</pre></td>
+                <td><pre>{% if pkg.locations %}{{ pkg.locations | map(attribute='path') | join(', ') }}{% endif %}</pre></td>
             </tr>
             {% endfor %}
         </tbody>

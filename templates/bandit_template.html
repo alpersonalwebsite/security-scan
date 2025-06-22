@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ report_title or 'Bandit Security Report' }}</title>
+    <title>{{ (report_title or 'Bandit Security Report') | e }}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
         h1 { color: #2c3e50; }
@@ -19,12 +19,13 @@
     </style>
 </head>
 <body>
-    <h1>{{ report_title or 'Bandit Security Report' }}</h1>
-    <h2>Summary</h2>
-    <ul>
-        <li><strong>Total Issues:</strong> {{ data.results|length }}</li>
-        <li><strong>Generated At:</strong> {{ data.generated_at }}</li>
-    </ul>
+    <h1><pre>{{ report_title or 'Bandit Security Report' }}</pre></h1>
+    <div class="summary">
+        <ul>
+            <li><strong>Scan Date:</strong> <pre>{{ data.generated_at }}</pre></li>
+            <li><strong>Total Issues:</strong> <pre>{{ data.metrics._totals.issues }}</pre></li>
+        </ul>
+    </div>
     <h2>Findings</h2>
     {% if data.results and data.results|length > 0 %}
     <table>
@@ -47,7 +48,7 @@
                 <td>{{ loop.index }}</td>
                 <td class="filename">{{ result.filename }}</td>
                 <td>{{ result.line_number }}</td>
-                <td>{{ result.test_name }}: {{ result.issue_text }}</td>
+                <td><pre>{{ result.test_name }}: {{ result.issue_text }}</pre></td>
                 <td class="severity-{{ result.issue_severity|lower }}">{{ result.issue_severity }}</td>
                 <td>{{ result.issue_confidence }}</td>
                 <td>

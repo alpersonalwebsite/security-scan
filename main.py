@@ -10,13 +10,14 @@ import shutil
 from jinja2 import Template
 
 from dotenv import load_dotenv
+import argparse
 
 from scanners import gitleaks, trufflehog, semgrep, syft, grype, bandit, safety, checkov, dependency_check, hadolint
 import socket
 from azure.core.pipeline.policies import HeadersPolicy, UserAgentPolicy
 from azure.core.pipeline import Pipeline
 from azure.core.pipeline.transport import RequestsTransport
-import argparse
+
 from modules.config_loader import load_config
 from modules.repo_manager import clone_repository, is_valid_repository
 from modules.report_generator import generate_summary_report
@@ -41,8 +42,19 @@ logging.basicConfig(
     ]
 )
 
-load_dotenv()
-GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+def get_connection_string(account_name, account_key, endpoint):
+    """
+    Generate a connection string for Azure Blob Storage or Azurite.
+    :param account_name: The storage account name.
+    :param account_key: The storage account key.
+    :param endpoint: The storage account endpoint.
+    :return: A formatted connection string.
+    """
+    # Use Azure's recommended format for production
+    if "core.windows.net" in endpoint:
+        return f"DefaultEndpointsProtocol=https;AccountName={account_name};AccountKey={account_key};EndpointSuffix=core.windows.net"
+    else:
+        return f"DefaultEndpointsProtocol=http;AccountName={account_name};AccountKey={account_key};BlobEndpoint={endpoint};"
 
 def update_dependency_check_database():
     logging.info("Updating OWASP Dependency-Check database")
@@ -87,31 +99,18 @@ def is_azurite_running(host='127.0.0.1', port=10000, timeout=1):
     except (OSError, ConnectionRefusedError):
         return False
 
-def upload_reports_to_azurite(report_dir, repo_name, blob_port=10000, connection_string=None):
-    sanitized_repo_name = repo_name.lower().replace('_', '-').replace('.', '-')
-    if not is_azurite_running(port=blob_port):
-        logging.warning(f"Azurite is not running on 127.0.0.1:{blob_port}. Skipping upload for this repository.")
-        return
-    if not connection_string:
-        endpoint = f"http://127.0.0.1:{blob_port}/devstoreaccount1"
-        connection_string = get_connection_string(
-            os.getenv("STORAGE_ACCOUNT_NAME", "devstoreaccount1"),
-            os.getenv("STORAGE_ACCOUNT_KEY", "Eby8vdM02xNOcqFeqCnf2P=="),
-            endpoint
-        )
+def upload_reports_to_blob_storage(report_dir, repo_name, connection_string):
     from azure.storage.blob import BlobServiceClient
+    sanitized_repo_name = repo_name.lower().replace('_', '-').replace('.', '-')
     blob_service_client = BlobServiceClient.from_connection_string(connection_string)
     container_client = blob_service_client.get_container_client(sanitized_repo_name)
     try:
         if not container_client.exists():
             container_client.create_container()
-        # Only show minimal info in INFO mode
-        if logging.getLogger().getEffectiveLevel() == logging.INFO:
-            logging.info(f"Container '{sanitized_repo_name}' exists or was created successfully.")
+        logging.info(f"Container '{sanitized_repo_name}' exists or was created successfully.")
     except Exception as e:
         logging.error(f"Error during container creation or existence check: {e}")
         return
-    # Upload the entire report_dir (date-time folder) recursively, preserving structure
     for root, dirs, files in os.walk(report_dir):
         for file in files:
             abs_path = os.path.join(root, file)
@@ -120,21 +119,9 @@ def upload_reports_to_azurite(report_dir, repo_name, blob_port=10000, connection
             try:
                 with open(abs_path, 'rb') as data:
                     container_client.upload_blob(blob_path, data, overwrite=True)
-                # Only show minimal info in INFO mode
-                if logging.getLogger().getEffectiveLevel() == logging.INFO:
-                    logging.info(f"Uploaded {blob_path} to Azurite container '{sanitized_repo_name}'")
+                logging.info(f"Uploaded {blob_path} to container '{sanitized_repo_name}'")
             except Exception as e:
                 logging.error(f"Error uploading {blob_path}: {e}")
-
-def get_connection_string(account_name, account_key, endpoint):
-    """
-    Generate a connection string for Azure Blob Storage or Azurite.
-    :param account_name: The storage account name.
-    :param account_key: The storage account key.
-    :param endpoint: The storage account endpoint.
-    :return: A formatted connection string.
-    """
-    return f"DefaultEndpointsProtocol=http;AccountName={account_name};AccountKey={account_key};BlobEndpoint={endpoint};"
 
 # Load environment variables for Azurite connection
 account_name = os.getenv("STORAGE_ACCOUNT_NAME", "devstoreaccount1")
@@ -168,7 +155,7 @@ for logger_name in azure_loggers:
 def parse_arguments():
     parser = argparse.ArgumentParser(description="Security scan runner")
     group = parser.add_mutually_exclusive_group(required=False)
-    group.add_argument("-dev", action="store_true", help="Run in development mode (default)")
+    group.add_argument("-dev", "--development", action="store_true", help="Run in development mode (default)")
     group.add_argument("-prod", "--production", action="store_true", help="Run in production mode")
     parser.add_argument("--config", type=str, default=CONFIG_PATH, help="Path to config YAML file")
     parser.add_argument("--log-level", type=str, default="INFO", help="Logging level (DEBUG, INFO, WARNING, ERROR)")
@@ -178,6 +165,17 @@ def parse_arguments():
     if args.production and args.blobPort is not None:
         parser.error("--blobPort is only allowed in development mode. Do not use it with -prod or --production.")
     return args
+
+# Load the correct .env file based on the mode
+args_for_env = parse_arguments()
+if getattr(args_for_env, 'production', False):
+    load_dotenv('.env.production')
+else:
+    load_dotenv('.env.development')
+
+# Now load environment variables
+GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
+SAFETY_API_KEY = os.getenv("SAFETY_API_KEY")
 
 def main():
     args = parse_arguments()
@@ -245,9 +243,14 @@ def main():
         repo_name = os.path.basename(repo["path"].rstrip('/'))
         generate_summary_report(timestamped_dir, os.path.join(timestamped_dir, "summary.html"))
         if not getattr(args, 'production', False):
-            upload_reports_to_azurite(timestamped_dir, repo_name, blob_port=blob_port, connection_string=azurite_connection_string)
+            upload_reports_to_blob_storage(timestamped_dir, repo_name, azurite_connection_string)
         else:
-            logging.info("Production mode: skipping Azurite upload.")
+            azure_account_name = os.getenv("STORAGE_ACCOUNT_NAME")
+            azure_account_key = os.getenv("STORAGE_ACCOUNT_KEY")
+            azure_endpoint = os.getenv("STORAGE_ACCOUNT_ENDPOINT", f"https://{azure_account_name}.blob.core.windows.net")
+            azure_connection_string = get_connection_string(azure_account_name, azure_account_key, azure_endpoint)
+            upload_reports_to_blob_storage(timestamped_dir, repo_name, azure_connection_string)
+            logging.info("Production mode: uploaded reports to Azure Blob Storage.")
     logging.info("All scans completed.")
     # Removed the generation of the summary.html in the root reports folder
 

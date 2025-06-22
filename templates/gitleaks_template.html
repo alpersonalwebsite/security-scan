@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ report_title or 'Gitleaks Secrets Scan Report' }}</title>
+    <title>{{ (report_title or 'Gitleaks Security Report') | e }}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
         h1 { color: #2c3e50; }
@@ -19,11 +19,11 @@
     </style>
 </head>
 <body>
-    <h1>{{ report_title or 'Gitleaks Secrets Scan Report' }}</h1>
+    <h1><pre>{{ report_title or 'Gitleaks Security Report' }}</pre></h1>
     <div class="summary">
         <ul>
-            <li><strong>Total Findings:</strong> {{ data|length }}</li>
-            <li><strong>Scan Date:</strong> {{ data[0].Date if data and data[0].Date else 'N/A' }}</li>
+            <li><strong>Scan Date:</strong> <pre>{{ data.scan_date }}</pre></li>
+            <li><strong>Total Leaks:</strong> <pre>{{ data.leaks|length }}</pre></li>
         </ul>
     </div>
     {% if data and data|length > 0 %}
@@ -55,8 +55,8 @@
                   {% endif %}
                 </td>
                 <td>{{ finding.Author }}</td>
-                <td class="secret">{{ finding.Secret }}</td>
-                <td class="match">{{ finding.Match }}</td>
+                <td class="secret"><pre>{{ finding.Secret }}</pre></td>
+                <td class="match"><pre>{{ finding.Match }}</pre></td>
                 <td>{{ '%.2f' % finding.Entropy if finding.Entropy is defined else '' }}</td>
                 <td>
                   {% if finding.Link %}

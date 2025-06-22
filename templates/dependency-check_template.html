@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>{{ report_title or 'Dependency-Check Security Report' }}</title>
+    <title>{{ (report_title or 'Dependency-Check Security Report') | e }}</title>
     <style>
         body { font-family: Arial, sans-serif; margin: 2em; background: #f9f9f9; }
         h1 { color: #2c3e50; }
@@ -21,24 +21,24 @@
     </style>
 </head>
 <body>
-    <h1>{{ report_title or 'Dependency-Check Security Report' }}</h1>
+    <h1><pre>{{ report_title or 'Dependency-Check Security Report' }}</pre></h1>
     <div class="summary">
         <ul>
-            <li><strong>Scan Date:</strong> {{ data.projectInfo.reportDate }}</li>
-            <li><strong>Engine Version:</strong> {{ data.scanInfo.engineVersion }}</li>
-            <li><strong>Total Dependencies:</strong> {{ data.dependencies|length }}</li>
-            <li><strong>Total Vulnerable Dependencies:</strong> {{ data.dependencies | selectattr('vulnerabilities') | select('truthy') | list | length }}</li>
+            <li><strong>Scan Date:</strong> <pre>{{ data.projectInfo.reportDate }}</pre></li>
+            <li><strong>Engine Version:</strong> <pre>{{ data.scanInfo.engineVersion }}</pre></li>
+            <li><strong>Total Dependencies:</strong> <pre>{{ data.dependencies|length }}</pre></li>
+            <li><strong>Total Vulnerable Dependencies:</strong> <pre>{{ data.dependencies | selectattr('vulnerabilities') | selectattr('vulnerabilities', '!=', []) | list | length }}</pre></li>
         </ul>
         <div class="credits">
             <strong>Credits:</strong>
             <ul>
                 {% for key, value in data.projectInfo.credits.items() %}
-                <li>{{ value }}</li>
+                <li><pre>{{ value }}</pre></li>
                 {% endfor %}
             </ul>
         </div>
     </div>
-    {% set vuln_deps = data.dependencies | selectattr('vulnerabilities') | select('truthy') | list %}
+    {% set vuln_deps = data.dependencies | selectattr('vulnerabilities') | selectattr('vulnerabilities', '!=', []) | list %}
     {% if vuln_deps and vuln_deps|length > 0 %}
     <table>
         <thead>
@@ -55,20 +55,20 @@
             {% for dep in vuln_deps %}
                 {% for vuln in dep.vulnerabilities %}
                 <tr class="severity-{{ vuln.severity|lower }}">
-                    <td class="filename">{{ dep.fileName }}</td>
-                    <td>{{ dep.version or '' }}</td>
-                    <td>{{ vuln.title or vuln.name or '' }}</td>
-                    <td class="severity-{{ vuln.severity|lower }}">{{ vuln.severity or '' }}</td>
+                    <td class="filename"><pre>{{ dep.fileName }}</pre></td>
+                    <td><pre>{{ dep.version or '' }}</pre></td>
+                    <td><pre>{{ vuln.title or vuln.name or '' }}</pre></td>
+                    <td class="severity-{{ vuln.severity|lower }}"><pre>{{ vuln.severity or '' }}</pre></td>
                     <td>
                         {% if vuln.identifiers %}
                             {% for ident in vuln.identifiers %}
                                 {% if ident.type == 'CVE' %}
-                                    <a class="cve-link" href="https://nvd.nist.gov/vuln/detail/{{ ident.value }}" target="_blank">{{ ident.value }}</a><br>
+                                    <a class="cve-link" href="https://nvd.nist.gov/vuln/detail/{{ ident.value }}" target="_blank"><pre>{{ ident.value }}</pre></a><br>
                                 {% endif %}
                             {% endfor %}
                         {% endif %}
                     </td>
-                    <td>{{ vuln.description or '' }}</td>
+                    <td><pre>{{ vuln.description or '' }}</pre></td>
                 </tr>
                 {% endfor %}
             {% endfor %}

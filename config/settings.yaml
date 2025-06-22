@@ -11,7 +11,7 @@ general:
 repositories:
   - path: https://github.com/alpersonalwebsite/unsafe-repository
     branch: main
-    skip: false
+    skip: true
   - path: https://github.com/alpersonalwebsite/apollo-graphql-full
     branch: master
     skip: false
