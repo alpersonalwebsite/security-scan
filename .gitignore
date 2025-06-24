@@ -1,17 +1,38 @@
 # Python
 __pycache__/
 *.py[cod]
+*.pyo
+*.pyd
+*.so
+
+# Virtual environments
 .venv/
+venv/
+ENV/
+
+# Environment variables
 .env
 .env.*
+
+# IDE/editor
+.vscode/
+.idea/
+.DS_Store
+
 # Logs
 logs/
-# Reports
-reports/*
-!reports/
-# Exclude cloned repositories
-cloned_repos/*
-!cloned_repos/
-.DS_Store
-# Ignore Safety project configuration file
-.safety-project.ini
+*.log
+
+# Reports and scan/test output (contains secrets/canaries)
+reports/
+cloned_repos/
+
+# Node modules (if any JS projects)
+node_modules/
+
+# Misc
+*.swp
+*.swo
+
+# Plan
+plan.md

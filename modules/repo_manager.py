@@ -24,6 +24,14 @@ def clone_repository(repo_path, branch, github_token, local_base_path="cloned_re
             subprocess.run([
                 "git", "clone", "--branch", branch, repo_url, "--depth", "1", local_path
             ], check=True)
+            # --- Sanitize .git/config to remove token from remote URL ---
+            if github_token:
+                # Remove token from remote URL after clone
+                import re
+                clean_url = re.sub(r"https://[^@]+@", "https://", repo_url)
+                subprocess.run([
+                    "git", "remote", "set-url", "origin", clean_url
+                ], cwd=local_path, check=True)
         else:
             # Handle local repository path
             if not os.path.exists(repo_path):
